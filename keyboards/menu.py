@@ -13,6 +13,10 @@ async def menu(bot):
         command=COMMANDS['job'],
         description='Поиск работы'
         ),
+        BotCommand(
+        command=COMMANDS['show'],
+        description='История поиска'
+        ),
         (
         BotCommand(
         command=COMMANDS['cancel'],

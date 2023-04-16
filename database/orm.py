@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from database.models import Base, User, Report, Request
 
+
 engine = create_engine(url='postgresql+psycopg2://postgres:1234@localhost/JobsBot', echo=True)
 conn = engine.connect()
 
@@ -53,4 +54,7 @@ def get_current_report_in_db(request_id, report_class, count):
     
     return report
 
-
+def get_report_in_db(user_id, request_class):
+    session = Session(engine)
+    requests = session.query(request_class.id).filter(user_id == request_class.user_id).all()
+    return requests

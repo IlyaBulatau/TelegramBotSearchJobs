@@ -29,6 +29,13 @@ async def command_cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer('Поиск вакансий прекращен')
 
+@router.message(Command(commands=COMMANDS['show']))
+async def command_show(message: Message):
+    requests = orm.get_report_in_db(message.from_user.id, Request)
+    if requests == []:
+        await message.answer(text='Вы пока не искали работу\n\nДля поиска работы введите /job')
+    else:
+        await message.answer(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len(requests)))
 
 @router.message(Command(commands=COMMANDS['job']))
 async def command_job(message: Message, state: FSMContext):

@@ -32,3 +32,4 @@ class Report(Base):
     link = Column(String(255))
     request_id = Column(DateTime(), ForeignKey('requests.id'))
     request = relationship('Request')
+

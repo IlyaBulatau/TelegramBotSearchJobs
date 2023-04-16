@@ -73,6 +73,7 @@ async def get_info(prfs, count_page, sort, datetime_now):
     """
     Открывает браузер, создает таски, выполняет таски, закрывает браузер
     """
+    report_count = count_page
     if count_page < 16:
         count_page = 1
     elif 15 < count_page < 31:
