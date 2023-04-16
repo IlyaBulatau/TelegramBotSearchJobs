@@ -9,12 +9,12 @@ class User(Base):
 
     id = Column(BigInteger(), primary_key=True)
     requests = relationship('Request')
-    
+    page = relationship('Page', back_populates='user', uselist=False)
 
 class Request(Base):
     __tablename__ = "requests"
 
-    id = Column(DateTime(), primary_key=True)
+    id = Column(String(90), primary_key=True)
     job = Column(String(90), nullable=False)
     sort = Column(String(10), nullable=False)
     page = Column(Integer(), nullable=False)
@@ -30,6 +30,13 @@ class Report(Base):
     salary = Column(String(50))
     description = Column(String(1000))
     link = Column(String(255))
-    request_id = Column(DateTime(), ForeignKey('requests.id'))
+    request_id = Column(String(), ForeignKey('requests.id'))
     request = relationship('Request')
 
+class Page(Base):
+    __tablename__ = "pages"
+
+    id = Column(Integer(), primary_key=True)
+    current = Column(Integer(), nullable=False)
+    user_id = Column(BigInteger(), ForeignKey('users.id'))
+    user = relationship('User', back_populates='page', uselist=False)

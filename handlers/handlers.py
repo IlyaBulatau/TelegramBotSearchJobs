@@ -4,21 +4,22 @@ from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
 import datetime
+import math
 
 from handlers.fsm import JobsForm
-from lexicon.lexicon import COMMANDS, CALLBACK
+from lexicon.lexicon import COMMANDS, CALLBACK, WARDS
 from keyboards import keyboards
 from handlers.filters import is_valid_count, is_valid_job
-from services import services
+from services import services, converting
 from database import orm
-from database.models import User, Request, Report
+from database.models import User, Request, Report, Page
 
 router = Router()
 
 @router.message(Command(commands=COMMANDS['start']))
 async def command_start(message: Message):
     if orm.is_user_in_db(message.from_user.id, User):
-        orm.add_user_to_db(message.from_user.id, User)
+        orm.add_user_to_db(message.from_user.id, User, Page)
     await message.answer(text=f'Привет {message.from_user.first_name}, я предоставляю информацию о вакансиях\n\nДля взаимодействия со мной используй меню')
 
 @router.message(Command(commands=COMMANDS['cancel']))
@@ -31,11 +32,15 @@ async def command_cancel(message: Message, state: FSMContext):
 
 @router.message(Command(commands=COMMANDS['show']))
 async def command_show(message: Message):
-    requests = orm.get_report_in_db(message.from_user.id, Request)
+    requests = orm.get_request_in_db(message.from_user.id, Request)
+    len_requests = math.ceil(len(requests) / 5) 
     if requests == []:
         await message.answer(text='Вы пока не искали работу\n\nДля поиска работы введите /job')
     else:
-        await message.answer(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len(requests)))
+        orm.update_current_page(message.from_user.id, Page, 1)
+        current_page = orm.get_current_page_in_db(message.from_user.id, Page)
+        requests = requests[current_page*5-5:current_page*5]
+        await message.answer(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
 
 @router.message(Command(commands=COMMANDS['job']))
 async def command_job(message: Message, state: FSMContext):
@@ -68,7 +73,7 @@ async def process_count_add(message: Message, state: FSMContext):
     data = await state.get_data()
     count = int(data['count'])
 
-    datetime_now = datetime.datetime.now()
+    datetime_now = converting.converting_datetime(datetime.datetime.now())
     orm.write_request_in_db(data, Request, message.from_user.id, datetime_now)
     await services.get_info(data['job'], int(data['count']), data['sort'], datetime_now)
     await state.clear()
@@ -83,3 +88,26 @@ async def process_count_add(message: Message, state: FSMContext):
 @router.message(JobsForm.count)
 async def process_count_not(message: Message):
     await message.answer(text='Пожалуйста, введите целое число от 1 до 45')
+
+@router.callback_query(Text(text='forward'))
+async def process_forward_page(callback: CallbackQuery):
+    current_page = orm.get_current_page_in_db(callback.from_user.id, Page)
+    requests = orm.get_request_in_db(callback.from_user.id, Request)
+    len_requests = math.ceil(len(requests) / 5)
+    if current_page < len_requests:
+        current_page += 1
+        orm.update_current_page(callback.from_user.id, Page, current_page)
+        requests = requests[current_page*5-5:current_page*5]
+        await callback.message.edit_text(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
+
+
+@router.callback_query(Text(text='backward'))
+async def process_backward_page(callback: CallbackQuery):
+    current_page = orm.get_current_page_in_db(callback.from_user.id, Page)
+    requests = orm.get_request_in_db(callback.from_user.id, Request)
+    len_requests = math.ceil(len(requests) / 5)
+    if current_page > 1:
+        current_page -= 1
+        orm.update_current_page(callback.from_user.id, Page, current_page)
+        requests = requests[current_page*5-5:current_page*5]
+        await callback.message.edit_text(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
