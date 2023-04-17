@@ -30,3 +30,11 @@ def show_requests(requests, len_requests, current_page):
     
     return keyboard.as_markup()
 
+def show_reports(reports):
+    keyboard = InlineKeyboardBuilder()
+
+    buttons = [InlineKeyboardButton(text=f'{report[0]}\nЗарплата: {report[1]}', url=report[2]) for report in reports]
+
+    keyboard.row(*buttons, width=3)
+    
+    return keyboard.as_markup()

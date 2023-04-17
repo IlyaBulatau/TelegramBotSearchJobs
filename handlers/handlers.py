@@ -9,7 +9,7 @@ import math
 from handlers.fsm import JobsForm
 from lexicon.lexicon import COMMANDS, CALLBACK, WARDS
 from keyboards import keyboards
-from handlers.filters import is_valid_count, is_valid_job
+from handlers.filters import is_valid_count, is_valid_job, is_requests_callback
 from services import services, converting
 from database import orm
 from database.models import User, Request, Report, Page
@@ -111,3 +111,10 @@ async def process_backward_page(callback: CallbackQuery):
         orm.update_current_page(callback.from_user.id, Page, current_page)
         requests = requests[current_page*5-5:current_page*5]
         await callback.message.edit_text(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
+
+@router.callback_query(is_requests_callback)
+async def process_show_report(callback: CallbackQuery):
+    reports = orm.get_reports_in_db(callback.data, Report)
+    request_id = callback.data
+    request = orm.get_request_job_in_db(callback.from_user.id, Request, request_id)[0]
+    await callback.message.answer(text=f'Запрос: {request}', reply_markup=keyboards.show_reports(reports))

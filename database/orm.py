@@ -72,9 +72,17 @@ def get_request_in_db(user_id, request_class):
     requests = session.query(request_class.id).filter(user_id == request_class.user_id).all()
     return requests
 
+def get_request_job_in_db(user_id, request_class, request_id):
+    session = Session(engine)
+    info = session.query(request_class.job).filter(user_id == request_class.user_id).filter(request_class.id == request_id).first()
+    return info
+
 def get_current_page_in_db(user_id, page_class):
     session = Session(engine)
     current_page = session.query(page_class.current).filter(user_id == page_class.user_id).first()
     return current_page[0]
 
-
+def get_reports_in_db(request_id, report_class):
+    session = Session(engine)
+    reports = session.query(report_class.title, report_class.salary, report_class.link).filter(report_class.request_id == request_id).all()
+    return reports

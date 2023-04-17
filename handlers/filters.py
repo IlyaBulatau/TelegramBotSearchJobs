@@ -18,3 +18,8 @@ def is_valid_count(msg):
         return False
     msg = int(msg.text)
     return 0 < msg < 46
+
+def is_requests_callback(callback):
+    import re
+    compile = re.compile(r'202\d_\w{3}_\d{2}_\d{2}h_\d{2}m_\d{2}s')
+    return re.fullmatch(compile, callback.data) != None
