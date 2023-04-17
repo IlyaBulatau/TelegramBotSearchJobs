@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardButton
 
-from lexicon.lexicon import CALLBACK, WARDS
+from lexicon.lexicon import CALLBACK, WARDS, MARKBOOKS
 
 
 def choice_sort_kb():
@@ -37,4 +37,23 @@ def show_reports(reports):
 
     keyboard.row(*buttons, width=3)
     
+    return keyboard.as_markup()
+
+def add_markbooks_kb():
+    keyboard = InlineKeyboardBuilder()
+    button = InlineKeyboardButton(text='Добавить в закладки', callback_data=MARKBOOKS['add'])
+    keyboard.row(button)
+    return keyboard.as_markup()
+
+def remove_from_markbooks_kb():
+    keyboard = InlineKeyboardBuilder()
+    button = InlineKeyboardButton(text='Удалить из закладок', callback_data=MARKBOOKS['remove'])
+    keyboard.row(button)
+    return keyboard.as_markup()
+
+def show_markbooks(marks):
+    keyboard = InlineKeyboardBuilder()
+    buttons = [InlineKeyboardButton(text=f'{mark[0]}', url=f'{mark[1]}') for mark in marks]
+
+    keyboard.row(*buttons, width=1)
     return keyboard.as_markup()

@@ -7,7 +7,7 @@ import datetime
 import math
 
 from handlers.fsm import JobsForm
-from lexicon.lexicon import COMMANDS, CALLBACK, WARDS
+from lexicon.lexicon import COMMANDS, CALLBACK, MARKBOOKS
 from keyboards import keyboards
 from handlers.filters import is_valid_count, is_valid_job, is_requests_callback
 from services import services, converting
@@ -20,7 +20,7 @@ router = Router()
 async def command_start(message: Message):
     if orm.is_user_in_db(message.from_user.id, User):
         orm.add_user_to_db(message.from_user.id, User, Page)
-    await message.answer(text=f'Привет {message.from_user.first_name}, я предоставляю информацию о вакансиях\n\nДля взаимодействия со мной используй меню')
+    await message.answer(text=f'Привет {message.from_user.first_name}, я предоставляю информацию о вакансиях в городе Минск\n\nДля взаимодействия со мной используй меню')
 
 @router.message(Command(commands=COMMANDS['cancel']))
 async def command_cancel(message: Message, state: FSMContext):
@@ -41,6 +41,11 @@ async def command_show(message: Message):
         current_page = orm.get_current_page_in_db(message.from_user.id, Page)
         requests = requests[current_page*5-5:current_page*5]
         await message.answer(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
+    
+@router.message(Command(commands=COMMANDS['liked']))
+async def command_liked(message: Message):
+    marks = orm.get_marks_reports(message.from_user.id, Report)
+    await message.answer(text='Ваши закладки', reply_markup=keyboards.show_markbooks(marks))
 
 @router.message(Command(commands=COMMANDS['job']))
 async def command_job(message: Message, state: FSMContext):
@@ -75,7 +80,7 @@ async def process_count_add(message: Message, state: FSMContext):
 
     datetime_now = converting.converting_datetime(datetime.datetime.now())
     orm.write_request_in_db(data, Request, message.from_user.id, datetime_now)
-    await services.get_info(data['job'], int(data['count']), data['sort'], datetime_now)
+    await services.get_info(data['job'], int(data['count']), data['sort'], datetime_now, message.from_user.id)
     await state.clear()
 
     answers = orm.get_current_report_in_db(datetime_now, Report, count)
@@ -83,7 +88,7 @@ async def process_count_add(message: Message, state: FSMContext):
         await message.answer(text=f"""{answer[0]}
         Зарплата: {answer[1]}
         Ссылка: {answer[2]}
-        """)
+        """, reply_markup=keyboards.add_markbooks_kb())
 
 @router.message(JobsForm.count)
 async def process_count_not(message: Message):
@@ -118,3 +123,22 @@ async def process_show_report(callback: CallbackQuery):
     request_id = callback.data
     request = orm.get_request_job_in_db(callback.from_user.id, Request, request_id)[0]
     await callback.message.answer(text=f'Запрос: {request}', reply_markup=keyboards.show_reports(reports))
+
+@router.callback_query(Text(text=MARKBOOKS['add']))
+async def process_add_to_markbooks(callback: CallbackQuery):
+    _, _, link = callback.message.text.split('\n')
+    link = ':'.join(link.split(':')[1:]).strip()
+    orm.update_report_bookmark_status_in_db(link, Report, True)
+    await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.remove_from_markbooks_kb())
+    await callback.answer(text=f'Вакансия добавлена в закладки')
+
+    
+
+@router.callback_query(Text(text=MARKBOOKS['remove']))
+async def process_remove_from_markbooks(callback: CallbackQuery):
+    _, _, link = callback.message.text.split('\n')
+    link = ':'.join(link.split(':')[1:]).strip()
+    orm.update_report_bookmark_status_in_db(link, Report, False)
+    await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.add_markbooks_kb())
+    await callback.answer(text=f'Вакансия убрана из закладок')
+    

@@ -17,12 +17,16 @@ async def menu(bot):
         command=COMMANDS['show'],
         description='История поиска'
         ),
+        BotCommand(
+        command=COMMANDS['liked'],
+        description='Мои вакансии'
+        ),
         (
         BotCommand(
         command=COMMANDS['cancel'],
         description='Закончить'
         )
-        )
+        ),
     ]
 
     await bot.set_my_commands(commands)

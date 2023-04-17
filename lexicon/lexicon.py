@@ -2,6 +2,7 @@ COMMANDS = {
     'start': 'start',
     'job': 'job',
     'show': 'show',
+    'liked': 'liked',
     'cancel': 'cancel'
 }
 
@@ -14,3 +15,9 @@ WARDS = {
     'backward': '<<',
     'forward': '>>'
 }
+
+MARKBOOKS ={
+    'add': 'add_to_mb',
+    'remove': 'remove_from_mb'
+}
+

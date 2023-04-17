@@ -46,14 +46,15 @@ def write_request_in_db(data, request_class, user_id, datetime_now):
     session.add(request)
     session.commit()
 
-def write_report_in_db(data, report_class, datetime_now):
+def write_report_in_db(data, report_class, user_id, datetime_now):
     session = Session(engine)
     report = report_class(
         title = data['title'],
         salary = data['salary'],
         description = data['description'],
         link = data['link'],
-        request_id = datetime_now
+        request_id = datetime_now,
+        user_id = user_id
     )
     session.add(report)
     session.commit()
@@ -85,4 +86,20 @@ def get_current_page_in_db(user_id, page_class):
 def get_reports_in_db(request_id, report_class):
     session = Session(engine)
     reports = session.query(report_class.title, report_class.salary, report_class.link).filter(report_class.request_id == request_id).all()
+    return reports
+
+def get_report_id_in_db(link, report_class):
+    session = Session(engine)
+    id = session.query(report_class.id).filter(report_class.link == link).first()
+    return id
+
+def update_report_bookmark_status_in_db(link, report_class, status):
+    session = Session(engine)
+    bm_status = session.query(report_class).filter(report_class.link == link).first()
+    bm_status.is_bookmarked = status
+    session.commit()
+
+def get_marks_reports(user_id, report_class):
+    session = Session(engine)
+    reports = session.query(report_class.title, report_class.link).filter(report_class.user_id == user_id).filter(report_class.is_bookmarked == True).all()
     return reports

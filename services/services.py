@@ -11,7 +11,7 @@ from pyppeteer import launch
 
 from database import orm, models
 
-async def get_jobs(browser, prfs, page, sort, datetime_now):
+async def get_jobs(browser, prfs, page, sort, datetime_now, user_id):
     """
     Получает страницу по запросу профессии, парсит ссылки на все вакансии,
     с помощью функции
@@ -28,14 +28,14 @@ async def get_jobs(browser, prfs, page, sort, datetime_now):
 
     tasks = []
     for link in data:
-        task = asyncio.create_task(get_data_job(browser, link, datetime_now))
+        task = asyncio.create_task(get_data_job(browser, link, datetime_now, user_id))
         tasks.append(task)
     
     await asyncio.gather(*tasks)
     await page.close()
     
 
-async def get_data_job(browser, url, datetime_now):
+async def get_data_job(browser, url, datetime_now, user_id):
     """
     Получает ссылку на вакансию, парсит со страницы все данные и сохраняет в базу данных
     """
@@ -64,12 +64,12 @@ async def get_data_job(browser, url, datetime_now):
 
     data = {'title': title, 'salary': salary, 'description': descriptions[:999], 'link': url}
 
-    orm.write_report_in_db(data, models.Report, datetime_now)
+    orm.write_report_in_db(data, models.Report, user_id, datetime_now)
 
     await page.close()
     
 
-async def get_info(prfs, count_page, sort, datetime_now):
+async def get_info(prfs, count_page, sort, datetime_now, user_id):
     """
     Открывает браузер, создает таски, выполняет таски, закрывает браузер
     """
@@ -83,7 +83,7 @@ async def get_info(prfs, count_page, sort, datetime_now):
     browser = await launch()
     tasks = []
     for page in range(1, count_page+1):
-        task = asyncio.create_task(get_jobs(browser, prfs, page, sort, datetime_now))
+        task = asyncio.create_task(get_jobs(browser, prfs, page, sort, datetime_now, user_id))
         tasks.append(task)
     
     await asyncio.gather(*tasks)

@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Integer, String, ForeignKey, Column, DateTime
+from sqlalchemy import BigInteger, Integer, String, ForeignKey, Column, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -9,6 +9,7 @@ class User(Base):
 
     id = Column(BigInteger(), primary_key=True)
     requests = relationship('Request')
+    reports = relationship('Report')
     page = relationship('Page', back_populates='user', uselist=False)
 
 class Request(Base):
@@ -30,8 +31,11 @@ class Report(Base):
     salary = Column(String(50))
     description = Column(String(1000))
     link = Column(String(255))
+    is_bookmarked = Column(Boolean(), default=False)
     request_id = Column(String(), ForeignKey('requests.id'))
+    user_id = Column(BigInteger(), ForeignKey('users.id'))
     request = relationship('Request')
+    user = relationship('User')
 
 class Page(Base):
     __tablename__ = "pages"
