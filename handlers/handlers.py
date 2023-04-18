@@ -4,6 +4,7 @@ from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
 import datetime
+import random
 import math
 
 from handlers.fsm import JobsForm
@@ -20,7 +21,7 @@ router = Router()
 async def command_start(message: Message):
     if orm.is_user_in_db(message.from_user.id, User):
         orm.add_user_to_db(message.from_user.id, User, Page)
-    await message.answer(text=f'Привет {message.from_user.first_name}, я предоставляю информацию о вакансиях в городе Минск\n\nДля взаимодействия со мной используй меню')
+    await message.answer(text=f'✋ Привет {message.from_user.first_name}, я предоставляю информацию о вакансиях в городе Минск 🏙️\n\nДля взаимодействия со мной используй меню')
 
 @router.message(Command(commands=COMMANDS['cancel']))
 async def command_cancel(message: Message, state: FSMContext):
@@ -40,12 +41,15 @@ async def command_show(message: Message):
         orm.update_current_page(message.from_user.id, Page, 1)
         current_page = orm.get_current_page_in_db(message.from_user.id, Page)
         requests = requests[current_page*5-5:current_page*5]
-        await message.answer(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
+        await message.answer(text='Ваша история поиска по дате 📊', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
     
 @router.message(Command(commands=COMMANDS['liked']))
 async def command_liked(message: Message):
     marks = orm.get_marks_reports(message.from_user.id, Report)
-    await message.answer(text='Ваши закладки', reply_markup=keyboards.show_markbooks(marks))
+    if marks == []:
+        await message.answer(text='У вас нет закладок')
+    else:
+        await message.answer(text='Ваши закладки ✴️', reply_markup=keyboards.show_markbooks(marks))
 
 @router.message(Command(commands=COMMANDS['job']))
 async def command_job(message: Message, state: FSMContext):
@@ -143,9 +147,18 @@ async def process_remove_from_markbooks(callback: CallbackQuery):
 @router.callback_query(Text(text='edit_marksbook'))
 async def process_edit_marksbook(callback: CallbackQuery):
     marks = orm.get_marks_reports(callback.from_user.id, Report)
+    await callback.message.edit_text(text='Для удаления закладки, щелкните по ней', reply_markup=keyboards.edit_marksbook(marks))
+
+@router.callback_query(lambda callback: callback.data.startswith('del_https://belmeta.com/redir'))
+async def process_selection_marks(callback: CallbackQuery):
+    orm.update_report_bookmark_status_in_db(callback.data.split('_')[1], Report, False)
+    marks = orm.get_marks_reports(callback.from_user.id, Report)
     await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.edit_marksbook(marks))
 
 @router.callback_query(Text(text=MARKBOOKS['Назад']))
-async def process_rewturn_show_marks(callback: CallbackQuery):
+async def process_return_show_marksbook(callback: CallbackQuery):
     marks = orm.get_marks_reports(callback.from_user.id, Report)
-    await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.show_markbooks(marks))
+    if marks == []:
+        callback.message.answer(text='У вас нет закладок')
+    else:
+        await callback.message.edit_text(text='Ваши закладки', reply_markup=keyboards.show_markbooks(marks))

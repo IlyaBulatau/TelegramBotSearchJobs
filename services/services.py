@@ -11,10 +11,17 @@ from pyppeteer import launch
 
 from database import orm, models
 
-async def get_jobs(browser, prfs, page, sort, datetime_now, user_id):
+async def get_jobs(browser, prfs, page, sort, datetime_now, user_id) -> str:
     """
-    Получает страницу по запросу профессии, парсит ссылки на все вакансии,
-    с помощью функции
+    Открывает страницу по запросу професся, критерий, кол-во страниц
+    вызывает функцию get_data_job для парсинга страницы
+
+    browser:: Обьект браузера
+    prfc:: Запрос вакансии
+    count_page:: Запрос количества результатов
+    sort:: Запрос критерия сортировки
+    datetime_now:: Время для записи request_id в базу данных, пример - 2023_Apr_17_20h_28m_26s
+    user_id:: ID юзера для записи в базу данных
     """
     page = await browser.newPage()
     # await page.setViewport({'width': 1900, 'height': 1000})
@@ -38,6 +45,11 @@ async def get_jobs(browser, prfs, page, sort, datetime_now, user_id):
 async def get_data_job(browser, url, datetime_now, user_id):
     """
     Получает ссылку на вакансию, парсит со страницы все данные и сохраняет в базу данных
+
+    browser:: Экзепляр браузера
+    url:: Ссылка на вакансию
+    datetime_now:: Время для записи request_id в базу данных, пример - 2023_Apr_17_20h_28m_26s
+    user_id:: ID юзера для записи в базу данных
     """
     page = await browser.newPage()
     # await page.setViewport({'width': 1900, 'height': 1000})
@@ -69,11 +81,16 @@ async def get_data_job(browser, url, datetime_now, user_id):
     await page.close()
     
 
-async def get_info(prfs, count_page, sort, datetime_now, user_id):
+async def get_info(prfs: str, count_page: int, sort: str, datetime_now: str, user_id: int) -> None:
     """
     Открывает браузер, создает таски, выполняет таски, закрывает браузер
+
+    prfc:: Запрос вакансии
+    count_page:: Запрос количества результатов
+    sort:: Запрос критерия сортировки
+    datetime_now:: Время для записи request_id в базу данных, пример - 2023_Apr_17_20h_28m_26s
+    user_id:: ID юзера для записи в базу данных
     """
-    report_count = count_page
     if count_page < 16:
         count_page = 1
     elif 15 < count_page < 31:
@@ -88,11 +105,5 @@ async def get_info(prfs, count_page, sort, datetime_now, user_id):
     
     await asyncio.gather(*tasks)
     await browser.close()
-
-#ПРИМЕР ЗАПУСКА
-# asyncio.run(get_info('Python', 1, 'date'))
-
-
-
 
 
