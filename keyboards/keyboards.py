@@ -53,7 +53,22 @@ def remove_from_markbooks_kb():
 
 def show_markbooks(marks):
     keyboard = InlineKeyboardBuilder()
+    edit_button = InlineKeyboardButton(text='Редактировать', callback_data='edit_marksbook')
     buttons = [InlineKeyboardButton(text=f'{mark[0]}', url=f'{mark[1]}') for mark in marks]
 
     keyboard.row(*buttons, width=1)
+    keyboard.row(edit_button)
+    return keyboard.as_markup()
+
+def edit_marksbook(marks):
+    keyboard = InlineKeyboardBuilder()
+    buttons_marks = [InlineKeyboardButton(text=f'{mark[0]}', url=f'{mark[1]}') for mark in marks]
+    button_cancel = InlineKeyboardButton(text='Отмена', callback_data=MARKBOOKS['Отмена'])
+    button_save = InlineKeyboardButton(text='Сохранить', callback_data=MARKBOOKS['Сохранить'])
+    button_return = InlineKeyboardButton(text='Назад', callback_data=MARKBOOKS['Назад'])
+
+    keyboard.row(button_cancel, button_save)
+    keyboard.row(*buttons_marks, width=1)
+    keyboard.row(button_return)
+
     return keyboard.as_markup()

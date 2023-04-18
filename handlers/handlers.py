@@ -132,8 +132,6 @@ async def process_add_to_markbooks(callback: CallbackQuery):
     await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.remove_from_markbooks_kb())
     await callback.answer(text=f'Вакансия добавлена в закладки')
 
-    
-
 @router.callback_query(Text(text=MARKBOOKS['remove']))
 async def process_remove_from_markbooks(callback: CallbackQuery):
     _, _, link = callback.message.text.split('\n')
@@ -141,4 +139,13 @@ async def process_remove_from_markbooks(callback: CallbackQuery):
     orm.update_report_bookmark_status_in_db(link, Report, False)
     await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.add_markbooks_kb())
     await callback.answer(text=f'Вакансия убрана из закладок')
-    
+
+@router.callback_query(Text(text='edit_marksbook'))
+async def process_edit_marksbook(callback: CallbackQuery):
+    marks = orm.get_marks_reports(callback.from_user.id, Report)
+    await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.edit_marksbook(marks))
+
+@router.callback_query(Text(text=MARKBOOKS['Назад']))
+async def process_rewturn_show_marks(callback: CallbackQuery):
+    marks = orm.get_marks_reports(callback.from_user.id, Report)
+    await callback.message.edit_text(text=callback.message.text, reply_markup=keyboards.show_markbooks(marks))
