@@ -16,6 +16,7 @@ async def run_bot():
 
     dp.include_router(router)
     dp.startup.register(menu.menu)
+    
 
     await dp.start_polling(bot)
 
@@ -23,4 +24,3 @@ async def run_bot():
 if __name__ == "__main__":
     asyncio.run(run_bot())
 
-# Рефакторинг

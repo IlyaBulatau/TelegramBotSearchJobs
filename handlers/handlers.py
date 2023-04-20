@@ -4,7 +4,6 @@ from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
 import datetime
-import random
 import math
 
 from handlers.fsm import JobsForm
@@ -14,8 +13,10 @@ from handlers.filters import is_valid_count, is_valid_job, is_requests_callback
 from services import services, converting
 from database import orm
 from database.models import User, Request, Report, Page
+from handlers.middleware import MyMiddelware
 
 router = Router()
+router.message.middleware(MyMiddelware())
 
 @router.message(Command(commands=COMMANDS['start']))
 async def command_start(message: Message):
@@ -76,7 +77,7 @@ async def process_sort_add(callback: CallbackQuery, state: FSMContext):
 async def process_sort_not(message: Message):
     await message.answer(text='Пожайлуйста, выберите критерий сортировки', reply_markup=keyboards.choice_sort_kb())
 
-@router.message(JobsForm.count, is_valid_count)
+@router.message(JobsForm.count, is_valid_count, flags={'long_operation': 'upload_document'})
 async def process_count_add(message: Message, state: FSMContext):
     await state.update_data(count=message.text)
     data = await state.get_data()
@@ -107,7 +108,7 @@ async def process_forward_page(callback: CallbackQuery):
         current_page += 1
         orm.update_current_page(callback.from_user.id, Page, current_page)
         requests = requests[current_page*5-5:current_page*5]
-        await callback.message.edit_text(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
+        await callback.message.edit_text(text='Ваша история поиска по дате 📊', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
 
 
 @router.callback_query(Text(text='backward'))
@@ -119,7 +120,7 @@ async def process_backward_page(callback: CallbackQuery):
         current_page -= 1
         orm.update_current_page(callback.from_user.id, Page, current_page)
         requests = requests[current_page*5-5:current_page*5]
-        await callback.message.edit_text(text='Ваша история поиска по дате', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
+        await callback.message.edit_text(text='Ваша история поиска по дате 📊', reply_markup=keyboards.show_requests(requests, len_requests, current_page))
 
 @router.callback_query(is_requests_callback)
 async def process_show_report(callback: CallbackQuery):
@@ -161,4 +162,4 @@ async def process_return_show_marksbook(callback: CallbackQuery):
     if marks == []:
         callback.message.answer(text='У вас нет закладок')
     else:
-        await callback.message.edit_text(text='Ваши закладки', reply_markup=keyboards.show_markbooks(marks))
+        await callback.message.edit_text(text='Ваши закладки ✴️', reply_markup=keyboards.show_markbooks(marks))
